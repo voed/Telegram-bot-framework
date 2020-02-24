@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using BotFramework.Config;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MihaZupan;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 
 namespace BotFramework
 {
@@ -15,34 +15,39 @@ namespace BotFramework
     {
         string UserName { get; }
         ITelegramBotClient BotClient { get; }
+        User Me { get; }
     }
     public class Bot: IHostedService, ITelegramBot
     {
         private readonly BotConfig _config = new BotConfig();
-        private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IServiceProvider services;
         private TelegramBotClient client;
-        private EventHandlerFactory factory;
-        private string _userName;
-
-        public Bot(IServiceProvider services, IServiceScopeFactory scopeFactory)
+        public User Me { get; private set; }
+        public string ConfigName { get; private set; }
+        private readonly PipelineDriver _driver;
+        internal Bot(IConfiguration configProvider, PipelineDriver driver, string configSection)
         {
-            this.services = services;
-            _scopeFactory = scopeFactory;
+            ConfigName = configSection;
+            var section = configProvider.GetSection(configSection);
+            if(section != null)
+            {
+                section.Bind(_config);
+                _driver = driver;
+            }
+            else
+            {
+                throw new ArgumentException($"Section {configSection} not fount");
+            }
         }
 
-        public string UserName => _userName;
+        public string UserName => Me.Username;
         public ITelegramBotClient BotClient => client;
 
         public async Task StartAsync(CancellationToken cancellationToken) { await StartListen(); }
 
         public async Task StopAsync(CancellationToken cancellationToken) { await Task.Run(client.StopReceiving, cancellationToken); }
 
-        public async Task StartListen()
+        private async Task StartListen()
         {
-            var configProvider = services.GetService<IConfiguration>();
-            var section = configProvider.GetSection("BotConfig");
-            section.Bind(_config);
             try
             {
                 if(_config.UseSOCKS5)
@@ -56,13 +61,11 @@ namespace BotFramework
                     client = new TelegramBotClient(_config.Token);
                 }
 
-                factory = new EventHandlerFactory();
-                factory.Find();
                 client.OnUpdate += Client_OnUpdate;
                 client.OnReceiveError += Client_OnReceiveError;
                 client.OnReceiveGeneralError += Client_OnReceiveGeneralError;
-                var me = await client.GetMeAsync();
-                _userName = me.Username;
+                Me  = await client.GetMeAsync();
+
             } catch(ArgumentException e)
             {
                 Console.WriteLine(e);
@@ -78,7 +81,7 @@ namespace BotFramework
                 else
                 {
                     //TODO подготовить и заспавнить контроллер
-                    await client.SetWebhookAsync(_config.WebHookURL);
+                    await client.SetWebhookAsync(_config.WebHookPublicURL);
                 }
             }
             else
@@ -87,23 +90,9 @@ namespace BotFramework
             }
         }
 
-        private async void Client_OnUpdate(object sender, UpdateEventArgs e)
+        private void Client_OnUpdate(object sender, UpdateEventArgs e)
         {
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    using var scope = _scopeFactory.CreateScope();
-
-                    var param = new HandlerParams(BotClient, e.Update, scope.ServiceProvider, _userName);
-                    await factory.ExecuteHandler(param);
-                });
-            } catch(Exception exception)
-            {
-                Console.WriteLine(exception);
-               // throw;
-            }
-
+            _driver.Push(new UpdatePackage(e.Update, this));
         }
 
         private void Client_OnReceiveGeneralError(object sender, ReceiveGeneralErrorEventArgs e)

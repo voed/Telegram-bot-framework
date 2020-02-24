@@ -13,12 +13,12 @@ namespace BotFramework
         internal readonly IServiceProvider ServiceProvider;
         private readonly string UserName;
 
-        internal HandlerParams(ITelegramBotClient bot, Update update, IServiceProvider serviceProvider, string userName)
+        internal HandlerParams(ITelegramBot bot, Update update, IServiceProvider serviceProvider)
         {
             ServiceProvider = serviceProvider;
-            Bot = bot;
+            Bot = bot.BotClient;
             Update = update;
-            UserName = userName;
+            UserName = bot.UserName;
             switch(update.Type)
             {
                 case UpdateType.Unknown:

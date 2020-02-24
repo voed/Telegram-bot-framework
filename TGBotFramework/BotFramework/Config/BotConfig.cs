@@ -4,7 +4,9 @@
     {
         public string Token { get; set; }
         public string UserName { get; set; }
-        public string WebHookURL { get; set; }
+        public string WebHookPublicURL { get; set; }
+        public string WebHookLocalURL { get; set; }
+        public bool UseWebhookLocalURL { get; set; }
         public bool UseSertificate { get; set; }
         public string WebHookSertPath { get; set; }
         public bool EnableWebHook { get; set; }
