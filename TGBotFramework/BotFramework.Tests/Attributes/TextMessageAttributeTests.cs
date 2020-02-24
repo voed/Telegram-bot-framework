@@ -1,5 +1,6 @@
 ﻿using BotFramework.Attributes;
 using BotFramework.Setup;
+using BotFramework.Tests.Primitives;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Xunit;
@@ -11,17 +12,20 @@ namespace BotFramework.Tests.Attributes
         [Fact]
         public void CanHandleAllTextMessages()
         {
-            var paramses = new HandlerParams(null, new Update(){Message = new Message(){Text = "Blah"}}, null, "testbot" );
+            var bot = new TelegramBot { UserName = "testbot" };
+
+            var paramses = new HandlerParams(bot, new Update { Message = new Message { Text = "Blah" } }, null);
             var attribute = new TextMessage();
 
             Assert.True(attribute.CanHandleInternal(paramses));
-            
-            paramses = new HandlerParams(null, new Update(){Message = new Message(){Animation = new Animation()}}, null, "testbot");
+
+            paramses = new HandlerParams(bot, new Update { Message = new Message { Animation = new Animation() } }, null);
 
             Assert.False(attribute.CanHandleInternal(paramses));
 
             attribute = new TextMessage(InChat.Public);
-            paramses = new HandlerParams(null, new Update() { Message = new Message() { Chat = new Chat(){Type = ChatType.Channel}, Text = "asd"} }, null, "testbot");
+            paramses = new HandlerParams(bot, new Update { Message = new Message { Chat = new Chat { Type = ChatType.Channel }, Text = "asd" } },
+                                         null);
 
             Assert.False(attribute.CanHandleInternal(paramses));
 
@@ -38,7 +42,9 @@ namespace BotFramework.Tests.Attributes
         [Fact]
         public void CanHandleSomeEqualTextInMessage()
         {
-            var paramses = new HandlerParams(null, new Update() { Message = new Message() { Text = "Blah" } }, null, "testbot");
+            var bot = new TelegramBot { UserName = "testbot" };
+
+            var paramses = new HandlerParams(bot, new Update { Message = new Message { Text = "Blah" } }, null);
             var attribute = new TextMessage("Blah");
 
             Assert.True(attribute.CanHandleInternal(paramses));
@@ -53,15 +59,19 @@ namespace BotFramework.Tests.Attributes
         [Fact]
         public void CanHandleSomeEqualTextInMessageByChat()
         {
-            var paramses = new HandlerParams(null, new Update() { Message = new Message() { Text = "Blah", Chat = new Chat() {Type = ChatType.Private}} }, null, "testbot");
-            var attribute = new TextMessage(InChat.All,"Blah");
+            var bot = new TelegramBot { UserName = "testbot" };
+
+            var paramses = new HandlerParams(bot, new Update { Message = new Message { Text = "Blah", Chat = new Chat { Type = ChatType.Private } } },
+                                             null);
+            var attribute = new TextMessage(InChat.All, "Blah");
 
             Assert.True(attribute.CanHandleInternal(paramses));
 
             attribute = new TextMessage(InChat.All, "Foo");
             Assert.False(attribute.CanHandleInternal(paramses));
 
-            paramses = new HandlerParams(null, new Update(){Message = new Message(){Chat = new Chat(){Type = ChatType.Channel}, Text = "Blah"}}, null, "bot" );
+            paramses = new HandlerParams(bot, new Update { Message = new Message { Chat = new Chat { Type = ChatType.Channel }, Text = "Blah" } },
+                                         null);
             attribute = new TextMessage(InChat.Channel, "Blah");
 
             Assert.True(attribute.CanHandleInternal(paramses));

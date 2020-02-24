@@ -1,6 +1,7 @@
-﻿using BotFramework.Attributes;
+﻿using System.Threading.Tasks;
+using BotFramework.Attributes;
+using BotFramework.Tests.Primitives;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Xunit;
 
@@ -29,7 +30,7 @@ namespace BotFramework.Tests
 
         private class TestHandlerAttribute: HandlerAttribute
         {
-            protected override bool CanHandle(HandlerParams param) { return true; }
+            protected override bool CanHandle(HandlerParams param) => true;
         }
 
         private class TestHandler: BotEventHandler
@@ -51,7 +52,8 @@ namespace BotFramework.Tests
         {
             Setup();
             _factory.Find();
-            var hParams = new HandlerParams(null, new Update(), _services.BuildServiceProvider(), "test");
+            var bot = new TelegramBot { UserName = "test" };
+            var hParams = new HandlerParams(bot, new Update(), _services.BuildServiceProvider());
             await _factory.ExecuteHandler(hParams);
             Assert.True(_proxy.Acessed);
             Assert.True(_proxy.Executed);
