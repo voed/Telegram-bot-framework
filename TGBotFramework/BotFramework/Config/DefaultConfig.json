@@ -1,9 +1,8 @@
 ﻿{
   "token": null,
   "userName": null,
-  "webHookPublicURL": null,
-  "webHookLocalURL": null,
-  "useWebhookLocalURL": false,
+  "webHookPublicURL": "https://examle.com/path/to/hook",
+  "webHookLocalRelativePath": "/path/to/hook/",
   "useSertificate": false,
   "webHookSertPath": null,
   "enableWebHook": false,

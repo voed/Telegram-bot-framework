@@ -10,7 +10,7 @@ namespace BotFramework
 {
     internal class EventHandlerFactory
     {
-        private readonly List<EventHandlerDescriptor> handlers = new List<EventHandlerDescriptor>();
+        private readonly List<EventHandlerDescriptor> _handlers = new List<EventHandlerDescriptor>();
 
         public void Find()
         {
@@ -20,14 +20,14 @@ namespace BotFramework
             {
                 try
                 {
-                    var types = assembly.GetTypes()
-                                        .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(BotEventHandler)));
+                    var types = assembly.GetTypes().Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(BotEventHandler)));
                     knowHandlers.AddRange(types);
                 } catch(ReflectionTypeLoadException) { }
             }
 
             foreach(var handler in knowHandlers)
             {
+                var assignation = handler.GetCustomAttribute<AssignHandlerToBot>();
                 var methods = handler.GetMethods().Where(x => x.GetCustomAttributes<HandlerAttribute>().Any());
 
                 foreach(var methodInfo in methods)
@@ -36,9 +36,10 @@ namespace BotFramework
                         {
                             Attribute = methodInfo.GetCustomAttribute<HandlerAttribute>(), Method = methodInfo, MethodOwner = handler
                         };
+                    eHandler.TargetInstances = assignation != null ? assignation.ConfigNames.ToArray() : new string[0];
                     eHandler.Parametrized = eHandler.Attribute is ParametrizedCommand;
                     eHandler.Parameters = methodInfo.GetParameters();
-                    handlers.Add(eHandler);
+                    _handlers.Add(eHandler);
                 }
             }
         }
@@ -47,9 +48,18 @@ namespace BotFramework
         {
             bool executed;
 
-            var parametrized = handlers.Where(x => x.Parametrized)
-                                       .Where(x => x.Attribute.CanHandleInternal(param))
+            bool MatchedInstance(EventHandlerDescriptor x)
+            {
+                return x.TargetInstances != null && x.TargetInstances.Contains(param.InstanceName) ||
+                       x.TargetInstances == null ||
+                       x.TargetInstances?.Length == 0;
+            }
+
+            var handlers = _handlers.Where(MatchedInstance).ToArray();
+
+            var parametrized = handlers.Where(x => x.Parametrized).Where(x => x.Attribute.CanHandleInternal(param))
                                        .ToList();
+
             foreach(var eventHandler in parametrized)
             {
                 executed = await Exec(eventHandler, param);
@@ -87,14 +97,8 @@ namespace BotFramework
                     var paramses = handler.Parameters;
                     if(parseOk)
                     {
-                        paramObjects =
-                            paramses.Select(x =>
-                                         {
-                                             return param.CommandParameters
-                                                         .First(p => p.Position == x.Position)
-                                                         .TypedValue;
-                                         })
-                                    .ToArray();
+                        paramObjects = paramses.Select(x => param.CommandParameters.First(p => p.Position == x.Position).TypedValue)
+                                               .ToArray();
                     }
                     else
                     {

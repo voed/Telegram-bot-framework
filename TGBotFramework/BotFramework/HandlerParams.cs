@@ -19,6 +19,7 @@ namespace BotFramework
             Bot = bot.BotClient;
             Update = update;
             UserName = bot.UserName;
+            InstanceName = bot.InstanceName;
             switch(update.Type)
             {
                 case UpdateType.Unknown:
@@ -102,7 +103,7 @@ namespace BotFramework
         public UpdateType Type => Update.Type;
         public InChat InChat { get; }
         public CallbackQuery CallbackQuery { get; }
-
+        public string InstanceName { get; }
         private void CheckForCommand()
         {
             if(Update.Type != UpdateType.Message)

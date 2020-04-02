@@ -9,7 +9,7 @@ using Telegram.Bot.Types;
 
 namespace BotFramework
 {
-    public class UpdatePackage
+    public class UpdatePackage: IEquatable<UpdatePackage>
     {
         public UpdatePackage(Update update, ITelegramBot instance)
         {
@@ -19,9 +19,41 @@ namespace BotFramework
 
         public Update Update { get; }
         public ITelegramBot Instance { get; }
+
+        public override bool Equals(object? obj)
+        {
+            if(ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if(ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            return obj.GetType() == GetType() && Equals((UpdatePackage)obj);
+        }
+
+        public bool Equals(UpdatePackage other)
+        {
+            if(ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if(ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return Update.Id == other.Update.Id && Equals(Instance, other.Instance);
+        }
+
+        public override int GetHashCode() => HashCode.Combine(Update, Instance);
     }
 
-    internal class PipelineDriver: IHostedService
+    public class PipelineDriver: IHostedService
     {
         private readonly AutoResetEvent _resetEvent = new AutoResetEvent(false);
 
@@ -79,8 +111,13 @@ namespace BotFramework
             while(isRun)
             {
                 _resetEvent.WaitOne();
+                var updates = TakeFromQueues().ToArray();
 
-                var updates = TakeFromQueues().OrderBy(x => x.Update.Id).ToArray();
+                if(updates.Length > 1)
+                {
+                    updates = updates.Distinct().OrderBy(x => x.Update.Id).ToArray();
+                }
+
                 if(updates.Length > 0)
                 {
                     Task.Run(async () =>
@@ -93,6 +130,8 @@ namespace BotFramework
                                         new HandlerParams(updatePackage.Instance, updatePackage.Update, scope.ServiceProvider));
                                 }
                             }
+
+                            updates = null;
                         });
                 }
             }
