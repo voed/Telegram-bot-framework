@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Linq;
 using BotFramework.ParameterResolvers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -14,12 +12,12 @@ namespace BotFramework
 
         public static void AddTelegramBot(this IServiceCollection c, string configSection)
         {
-            if(!c.Any(x => x.ServiceType == typeof(ITelegramBot) && ((Bot)x.ImplementationInstance).ConfigName == configSection))
+            if(!isSettedUp)
             {
-                c.AddTransient<ITelegramBot, Bot>(x => new Bot(x.GetService<IConfiguration>(), x.GetService<PipelineDriver>(), configSection));
-                c.AddTransient<IHostedService>(x => x.GetService<PipelineDriver>());
-                c.AddTransient<IHostedService>(x => (Bot)x.GetService<ITelegramBot>());
+                c.Setup();
             }
+
+            BotInstanceManager.RegisterInstance(configSection);
         }
 
         public static IServiceCollection AddTelegramBotParameterParser<TParam, TParser>(this IServiceCollection collection)
@@ -45,21 +43,20 @@ namespace BotFramework
 
         private static IServiceCollection Setup(this IServiceCollection c)
         {
-            if(!isSettedUp)
-            {
-                c.AddTelegramBotParameterParser<long, LongParameter>()
-                 .AddTelegramBotParameterParser<int, IntParameter>()
-                 .AddTelegramBotParameterParser<string, StringParametr>()
-                 .AddTelegramBotParameterParser<bool, BoolParameter>()
-                 .AddTelegramBotParameterParser<float, FloatParameter>()
-                 .AddTelegramBotParameterParser<double, DoubleParameter>()
-                 .AddTelegramBotParameterParser<decimal, DecimalParameter>()
-                 .AddTelegramBotParameterParser<DateTime, DateTimeParameter>()
-                 .AddTelegramBotParameterParser<DateTimeOffset, DateTimeOffsetParameter>()
-                 .AddTelegramBotParameterParser<TimeSpan, TimeSpanParameter>()
-                 .AddDriver();
-                isSettedUp = true;
-            }
+            c.AddTelegramBotParameterParser<long, LongParameter>()
+             .AddTelegramBotParameterParser<int, IntParameter>()
+             .AddTelegramBotParameterParser<string, StringParametr>()
+             .AddTelegramBotParameterParser<bool, BoolParameter>()
+             .AddTelegramBotParameterParser<float, FloatParameter>()
+             .AddTelegramBotParameterParser<double, DoubleParameter>()
+             .AddTelegramBotParameterParser<decimal, DecimalParameter>()
+             .AddTelegramBotParameterParser<DateTime, DateTimeParameter>()
+             .AddTelegramBotParameterParser<DateTimeOffset, DateTimeOffsetParameter>()
+             .AddTelegramBotParameterParser<TimeSpan, TimeSpanParameter>()
+             .AddDriver()
+             .AddSingleton<BotInstanceManager>()
+             .AddTransient<IHostedService, BotInstanceManager>(s => s.GetService<BotInstanceManager>());
+            isSettedUp = true;
 
             return c;
         }

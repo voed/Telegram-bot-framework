@@ -29,5 +29,6 @@ namespace BotFramework
         public Type MethodOwner;
         public ParameterInfo[] Parameters;
         public bool Parametrized;
+        public string[] TargetInstances;
     }
 }
