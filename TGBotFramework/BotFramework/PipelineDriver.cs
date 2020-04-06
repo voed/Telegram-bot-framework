@@ -20,7 +20,7 @@ namespace BotFramework
         public Update Update { get; }
         public ITelegramBot Instance { get; }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if(ReferenceEquals(null, obj))
             {
