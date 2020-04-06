@@ -41,7 +41,7 @@ namespace BotFramework
             return c;
         }
 
-        private static IServiceCollection Setup(this IServiceCollection c)
+        private static void Setup(this IServiceCollection c)
         {
             c.AddTelegramBotParameterParser<long, LongParameter>()
              .AddTelegramBotParameterParser<int, IntParameter>()
@@ -57,8 +57,6 @@ namespace BotFramework
              .AddSingleton<BotInstanceManager>()
              .AddTransient<IHostedService, BotInstanceManager>(s => s.GetService<BotInstanceManager>());
             isSettedUp = true;
-
-            return c;
         }
     }
 }

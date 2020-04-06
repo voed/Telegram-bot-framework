@@ -52,7 +52,7 @@ namespace BotFramework
             {
                 return x.TargetInstances != null && x.TargetInstances.Contains(param.InstanceName) ||
                        x.TargetInstances == null ||
-                       x.TargetInstances?.Length == 0;
+                       x.TargetInstances.Length == 0;
             }
 
             var handlers = _handlers.Where(MatchedInstance).ToArray();
