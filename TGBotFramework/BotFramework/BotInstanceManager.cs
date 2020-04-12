@@ -20,6 +20,7 @@ namespace BotFramework
         private List<WebhookListener> webhookListeners = new List<WebhookListener>();
         private WebHookDriver webHookDriver;
         private LocalWebhookListenerConfig _webhookListenerConfig = new LocalWebhookListenerConfig();
+        private bool isStarted = false;
 
         public BotInstanceManager(IServiceProvider serviceProvider, IServiceScopeFactory scopeFactory)
         {
@@ -32,6 +33,11 @@ namespace BotFramework
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            if(isStarted)
+            {
+                return;
+            }
+
             CreateInstances();
             if(webhookListeners.Any())
             {
@@ -45,6 +51,7 @@ namespace BotFramework
             }
 
             await driver.StartAsync(cancellationToken);
+            isStarted = true;
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -57,6 +64,7 @@ namespace BotFramework
             }
 
             await driver.StopAsync(cancellationToken);
+            isStarted = false;
         }
 
         internal static void RegisterInstance(string configSectionName) { configNames.Add(configSectionName); }
@@ -90,6 +98,14 @@ namespace BotFramework
             return config;
         }
 
-        public ITelegramBot GetInstanceByName(string name) => instances.FirstOrDefault(x => x.InstanceName == name);
+        public ITelegramBot GetInstanceByName(string name)
+        {
+            if(!isStarted)
+            {
+                StartAsync(CancellationToken.None).Wait();
+            }
+
+            return instances.FirstOrDefault(x => x.InstanceName == name);
+        }
     }
 }
