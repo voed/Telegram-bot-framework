@@ -54,7 +54,7 @@ namespace BotFramework
              .AddTelegramBotParameterParser<DateTimeOffset, DateTimeOffsetParameter>()
              .AddTelegramBotParameterParser<TimeSpan, TimeSpanParameter>()
              .AddDriver()
-             .AddSingleton<BotInstanceManager>()
+             .AddSingleton<BotInstanceManager>().AddScoped<ModuleProvider>()
              .AddTransient<IHostedService, BotInstanceManager>(s => s.GetService<BotInstanceManager>());
             isSettedUp = true;
         }

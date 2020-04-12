@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using BotFramework.Attributes;
 using Telegram.Bot;
@@ -9,6 +11,7 @@ namespace BotFramework
     public abstract class BotEventHandler
     {
         private HandlerParams _params;
+        private ModuleProvider __ModuleProvider;
 
         protected Chat Chat => _params.Chat;
         protected User From => _params.From;
@@ -19,6 +22,9 @@ namespace BotFramework
         protected bool IsCallbackQuery => CallbackQuery != null;
         protected CallbackQuery CallbackQuery => _params.CallbackQuery;
 
+        protected TModule Module<TModule>() where TModule: BaseBotModule => __ModuleProvider.Module<TModule>();
+
+        internal void __InstallModuleProvider(ModuleProvider provider) => __ModuleProvider = provider;
         internal void __Instantiate(HandlerParams param) { _params = param; }
     }
 

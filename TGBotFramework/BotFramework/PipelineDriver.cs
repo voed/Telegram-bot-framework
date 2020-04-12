@@ -124,10 +124,12 @@ namespace BotFramework
                         {
                             using(var scope = _scopeFactory.CreateScope())
                             {
+                                var moduleProvider = scope.ServiceProvider.GetService<ModuleProvider>();
                                 foreach(var updatePackage in updates)
                                 {
-                                    await factory.ExecuteHandler(
-                                        new HandlerParams(updatePackage.Instance, updatePackage.Update, scope.ServiceProvider));
+                                    var hParams = new HandlerParams(updatePackage.Instance, updatePackage.Update, scope.ServiceProvider);
+                                    await moduleProvider.ExecuteEvents(hParams);
+                                    await factory.ExecuteHandler(hParams);
                                 }
                             }
 

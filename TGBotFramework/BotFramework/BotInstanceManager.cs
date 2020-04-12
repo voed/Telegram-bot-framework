@@ -33,18 +33,19 @@ namespace BotFramework
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             CreateInstances();
-            if(webhookListeners.Any())
-            {
-                webHookDriver = new WebHookDriver(webhookListeners, driver, _webhookListenerConfig);
-                webHookDriver.Start();
-            }
-
+            ConfigureModules();
             foreach(var instance in instances)
             {
                 await instance.StartAsync(cancellationToken);
             }
 
             await driver.StartAsync(cancellationToken);
+
+            if(webhookListeners.Any())
+            {
+                webHookDriver = new WebHookDriver(webhookListeners, driver, _webhookListenerConfig);
+                webHookDriver.Start();
+            }
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -88,6 +89,19 @@ namespace BotFramework
             var config = new BotConfig();
             provider.Bind(name, config);
             return config;
+        }
+
+        private void ConfigureModules()
+        {
+            using(var scope = scopeFactory.CreateScope())
+            {
+                var modules = scope.ServiceProvider.GetServices<BaseBotModule>();
+                foreach(var baseBotModule in modules)
+                {
+                    baseBotModule.__Configure();
+                }
+            }
+            
         }
 
         public ITelegramBot GetInstanceByName(string name) => instances.FirstOrDefault(x => x.InstanceName == name);
