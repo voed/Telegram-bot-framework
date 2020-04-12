@@ -10,7 +10,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace BotFramework
 {
-    internal class BotInstanceManager: IHostedService
+    public class BotInstanceManager: IHostedService
     {
         private static readonly List<string> configNames = new List<string>();
         private readonly PipelineDriver driver;
@@ -89,5 +89,7 @@ namespace BotFramework
             provider.Bind(name, config);
             return config;
         }
+
+        public ITelegramBot GetInstanceByName(string name) => instances.FirstOrDefault(x => x.InstanceName == name);
     }
 }
