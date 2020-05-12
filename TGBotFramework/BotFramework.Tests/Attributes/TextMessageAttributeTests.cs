@@ -71,6 +71,12 @@ namespace BotFramework.Tests.Attributes
 
             attribute = new TextMessage(InChat.Channel, "asd");
             Assert.False(attribute.CanHandleInternal(paramses));
+
+            attribute = new TextMessage("foo|bar|Blah", true);
+            Assert.True(attribute.CanHandleInternal(paramses));
+
+            attribute = new TextMessage("foo", true);
+            Assert.False(attribute.CanHandleInternal(paramses));
         }
     }
 }

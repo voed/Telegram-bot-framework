@@ -38,13 +38,6 @@ namespace BotFramework.Attributes
             _regexp = regexp;
         }
 
-        public TextMessage(InChat inChat, bool regexp)
-        {
-            _text = "";
-            _inChat = inChat;
-            _regexp = regexp;
-        }
-
         public TextMessage(string text, bool regexp)
         {
             _text = text;
